@@ -242,36 +242,6 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $this->assertContains(self::$quads[3], $d);
     }
 
-    public function testIntOffset(): void {
-        $d = static::getDataset();
-
-        try {
-            isset($d[1]);
-        } catch (OutOfRangeException $ex) {
-            $this->assertTrue(true);
-        }
-        $this->assertFalse(isset($d[0]));
-        try {
-            $x = $d[0];
-        } catch (OutOfBoundsException $ex) {
-            $this->assertTrue(true);
-        }
-
-        $d[] = self::$quads[0];
-        try {
-            $x = $d[1];
-        } catch (OutOfRangeException $ex) {
-            $this->assertTrue(true);
-        }
-        $this->assertTrue(isset($d[0]));
-        $this->assertTrue(self::$quads[0]->equals($d[0]));
-
-        $d[] = self::$quads[1];
-        $this->assertCount(2, $d);
-        $this->assertTrue(isset($d[0]));
-        $this->assertInstanceOf(Quad::class, $d[0]); // there is no guarantee which quad is returned
-    }
-
     public function testToString(): void {
         $d   = static::getDataset();
         $d->add(self::$quads[0]);
@@ -506,9 +476,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $d2[] = self::$quads[1];
         $d2[] = self::$quads[2];
 
-        $d11 = $d1->copy();
-        $d22 = $d2->copy();
-        $d3  = $d1->xor($d2);
+        $d3 = $d1->xor($d2);
         $this->assertCount(2, $d1);
         $this->assertCount(2, $d2);
         $this->assertCount(2, $d3);
@@ -529,6 +497,13 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         });
         $this->assertEquals(2, (int) (string) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
         $this->assertEquals(10, (int) (string) $d[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+    }
+
+    public function testCurrent(): void {
+        $d   = static::getDataset();
+        $this->assertNull($d->current());
+        $d[] = self::$quads[0];
+        $this->assertTrue(self::$quads[0]->equals($d->current()));
     }
 
     public function testForeignTerms(): void {
