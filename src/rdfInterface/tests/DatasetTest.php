@@ -321,10 +321,6 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $d1 = static::getDataset();
         $d1->add(new GenericQuadIterator(self::$quads));
 
-        // simple
-        $d2 = $d1->copyExcept();
-        $this->assertTrue($d1->equals($d2));
-
         // Quad
         $d2   = $d1->copyExcept(self::$quads[0]);
         $this->assertFalse($d1->equals($d2));
@@ -493,10 +489,17 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $d[] = self::$df::quad(self::$df::namedNode('bar'), self::$df::namedNode('baz'), self::$df::literal(5));
         $d->forEach(function (Quad $x): Quad {
             $obj = $x->getObject();
-            return $obj instanceof Literal ? $x->withObject($obj->withValue((float) (string) $obj->getValue() * 2)) : $x;
+            return $obj instanceof Literal ? $x->withObject($obj->withValue((float) $obj->getValue() * 2)) : $x;
         });
-        $this->assertEquals(2, (int) (string) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
-        $this->assertEquals(10, (int) (string) $d[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+        $this->assertEquals(2, (int) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
+        $this->assertEquals(10, (int) $d[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+        
+        $d->forEach(function (Quad $x): ?Quad {
+            $obj = $x->getObject();
+            return $obj instanceof Literal && $obj->getValue() < 5 ? $x : null;
+        });
+        $this->assertCount(1, $d);
+        $this->assertEquals(2, (int) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
     }
 
     public function testCurrent(): void {
