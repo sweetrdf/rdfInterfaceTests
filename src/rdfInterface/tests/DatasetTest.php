@@ -27,7 +27,6 @@
 namespace rdfInterface\tests;
 
 use OutOfBoundsException;
-use OutOfRangeException;
 use rdfHelpers\GenericQuadIterator;
 use rdfInterface\Literal;
 use rdfInterface\Quad;
@@ -69,6 +68,9 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $d = static::getDataset();
         $d->add(new GenericQuadIterator(self::$quads));
         foreach ($d as $k => $v) {
+            if ($v === null) {
+                throw new \RuntimeException();
+            }
             $this->assertTrue($v->equals(self::$quads[$k]));
         }
     }
@@ -493,20 +495,30 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         });
         $this->assertEquals(2, (int) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
         $this->assertEquals(10, (int) $d[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
-        
+
         $d->forEach(function (Quad $x): ?Quad {
             $obj = $x->getObject();
             return $obj instanceof Literal && $obj->getValue() < 5 ? $x : null;
         });
         $this->assertCount(1, $d);
         $this->assertEquals(2, (int) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
+
+        $d2 = $d->copy();
+        $d->forEach(function (Quad $x): ?Quad {
+            throw new \RuntimeException();
+        }, static::getQuadTemplate(self::$df::namedNode('foobar')));
+        $this->assertTrue($d2->equals($d));
     }
 
     public function testCurrent(): void {
         $d   = static::getDataset();
         $this->assertNull($d->current());
         $d[] = self::$quads[0];
-        $this->assertTrue(self::$quads[0]->equals($d->current()));
+        if ($d->current() === null) {
+            throw new \RuntimeException();
+        } else {
+            $this->assertTrue(self::$quads[0]->equals($d->current()));
+        }
     }
 
     public function testForeignTerms(): void {

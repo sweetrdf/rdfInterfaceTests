@@ -63,6 +63,11 @@ abstract class DatasetMapReduceTest extends \PHPUnit\Framework\TestCase {
         $this->assertCount(2, $d2);
         $this->assertEquals(2, (int) (string) $d2[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
         $this->assertEquals(10, (int) (string) $d2[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+
+        $d3 = $d2->map(function (Quad $x) {
+            throw new \RuntimeException();
+        }, static::getQuadTemplate(self::$df::namedNode('foobar')));
+        $this->assertEquals(0, count($d3));
     }
 
     public function testReduce(): void {
@@ -76,5 +81,10 @@ abstract class DatasetMapReduceTest extends \PHPUnit\Framework\TestCase {
         $this->assertCount(2, $d1);
         $this->assertEquals(1, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
         $this->assertEquals(5, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+
+        $sum = $d1->reduce(function (Quad $x) {
+            throw new \RuntimeException();
+        }, -5, static::getQuadTemplate(self::$df::namedNode('foobar')));
+        $this->assertEquals(-5, $sum);
     }
 }
