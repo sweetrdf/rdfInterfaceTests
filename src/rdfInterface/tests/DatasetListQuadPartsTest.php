@@ -90,4 +90,25 @@ abstract class DatasetListQuadPartsTest extends \PHPUnit\Framework\TestCase {
         $list = iterator_to_array($d->listGraphs($this->getQuadTemplate(static::$df::namedNode('foobar'))));
         $this->assertEquals(0, count($list));
     }
+
+    public function testNested(): void {
+        //0 <foo> <bar> "baz"
+        //1 <baz> <foo> <bar>
+        //2 <bar> <baz> <foo>
+        //3 <foo> <bar> "baz"@en <graph>
+        $d = static::getDataset();
+        $d->add(new GenericQuadIterator(self::$quads));
+        $d->add(self::$quads[3]->withPredicate(self::$quads[2]->getPredicate()));
+
+        $counts = ['foo' => 2, 'bar' => 1, 'baz' => 1];
+        foreach ($d->listSubjects() as $sbj) {
+            $n = 0;
+            $d1 = $d->copy($this->getQuadTemplate($sbj));
+            foreach ($d1->listPredicates() as $pred) {
+                $n++;
+                $d2 = $d1->copy($this->getQuadTemplate(null, $pred));
+            }
+            $this->assertEquals($counts[$sbj->getValue()], $n, $sbj->getValue());
+        }
+    }
 }
