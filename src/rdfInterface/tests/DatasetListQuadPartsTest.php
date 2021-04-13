@@ -108,7 +108,7 @@ abstract class DatasetListQuadPartsTest extends \PHPUnit\Framework\TestCase {
                 $n++;
                 $d2 = $d1->copy($this->getQuadTemplate(null, $pred));
             }
-            $this->assertEquals($counts[$sbj->getValue()], $n, $sbj->getValue());
+            $this->assertEquals($counts[$sbj?->getValue()], $n, $sbj?->getValue());
         }
     }
 }
