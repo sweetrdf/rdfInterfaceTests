@@ -118,6 +118,23 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         } catch (OutOfBoundsException) {
             
         }
+
+        // by integer
+        $quad = $d[0];
+        $this->assertEquals(1, array_sum(array_map(fn($x) => $x->equals($quad), self::$quads)));
+        try {
+            $quad = $d[1];
+            $this->assertTrue(false);
+        } catch (OutOfBoundsException) {
+            
+        }
+        $d = static::getDataset();
+        try {
+            $quad = $d[0];
+            $this->assertTrue(false);
+        } catch (OutOfBoundsException) {
+            
+        }
     }
 
     public function testOffsetSet(): void {
