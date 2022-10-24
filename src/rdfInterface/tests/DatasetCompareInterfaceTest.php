@@ -29,7 +29,7 @@ namespace rdfInterface\tests;
 use rdfHelpers\GenericQuadIterator;
 use rdfInterface\LiteralInterface as Literal;
 use rdfInterface\QuadInterface as Quad;
-use rdfInterface\DatasetCompareInterface as DatasetCompare;
+use rdfInterface\DatasetInterface as Dataset;
 use rdfInterface\TermInterface as Term;
 use rdfInterface\TermCompareInterface as TermCompare;
 use rdfInterface\QuadCompareInterface as QuadCompare;
@@ -43,7 +43,7 @@ abstract class DatasetCompareInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
-    abstract public static function getDataset(): DatasetCompare;
+    abstract public static function getDataset(): Dataset;
 
     abstract public static function getQuadTemplate(TermCompare | Term | null $subject = null,
                                                     TermCompare | Term | null $predicate = null,

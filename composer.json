@@ -16,7 +16,7 @@
         "php": ">=8.0",
         "zozlak/rdf-constants": "^1.1",
         "sweetrdf/rdf-interface": "dev-master",
-        "sweetrdf/rdf-helpers": "*",
+        "sweetrdf/rdf-helpers": "dev-master",
         "phpunit/phpunit": "^9.5"
     },
     "autoload": {
@@ -26,7 +26,6 @@
     },
     "require-dev": {
         "phpstan/phpstan": "*",
-        "squizlabs/php_codesniffer": "*",
-        "phpstan/phpstan": "*"
+        "squizlabs/php_codesniffer": "*"
     }
 }
