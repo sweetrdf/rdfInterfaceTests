@@ -26,19 +26,19 @@
 
 namespace rdfInterface\tests;
 
-use rdfInterface\Term;
-use rdfInterface\BlankNode;
-use rdfInterface\NamedNode;
-use rdfInterface\Literal;
-use rdfInterface\DefaultGraph;
-use rdfInterface\Quad;
+use rdfInterface\TermInterface as Term;
+use rdfInterface\BlankNodeInterface as BlankNode;
+use rdfInterface\NamedNodeInterface as NamedNode;
+use rdfInterface\LiteralInterface as Literal;
+use rdfInterface\DefaultGraphInterface as DefaultGraph;
+use rdfInterface\QuadInterface as Quad;
 
 /**
  * Description of LoggerTest
  *
  * @author zozlak
  */
-abstract class DataFactoryTest extends \PHPUnit\Framework\TestCase {
+abstract class DataFactoryInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 

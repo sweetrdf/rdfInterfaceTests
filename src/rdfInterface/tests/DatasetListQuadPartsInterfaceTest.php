@@ -26,10 +26,10 @@
 
 namespace rdfInterface\tests;
 
-use rdfInterface\DatasetListQuadParts;
-use rdfInterface\Term;
-use rdfInterface\TermCompare;
-use rdfInterface\QuadCompare;
+use rdfInterface\DatasetListQuadPartsInterface as DatasetListQuadParts;
+use rdfInterface\TermInterface as Term;
+use rdfInterface\TermCompareInterface as TermCompare;
+use rdfInterface\QuadCompareInterface as QuadCompare;
 use rdfHelpers\GenericQuadIterator;
 
 /**
@@ -37,7 +37,7 @@ use rdfHelpers\GenericQuadIterator;
  *
  * @author zozlak
  */
-abstract class DatasetListQuadPartsTest extends \PHPUnit\Framework\TestCase {
+abstract class DatasetListQuadPartsInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
@@ -102,13 +102,13 @@ abstract class DatasetListQuadPartsTest extends \PHPUnit\Framework\TestCase {
 
         $counts = ['foo' => 2, 'bar' => 1, 'baz' => 1];
         foreach ($d->listSubjects() as $sbj) {
-            $n = 0;
+            $n  = 0;
             $d1 = $d->copy($this->getQuadTemplate($sbj));
             foreach ($d1->listPredicates() as $pred) {
                 $n++;
                 $d2 = $d1->copy($this->getQuadTemplate(null, $pred));
             }
-            $this->assertEquals($counts[$sbj?->getValue()], $n, $sbj?->getValue());
+            $this->assertEquals($counts[$sbj->getValue()], $n, $sbj->getValue());
         }
     }
 }

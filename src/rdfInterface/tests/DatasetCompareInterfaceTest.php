@@ -27,19 +27,19 @@
 namespace rdfInterface\tests;
 
 use rdfHelpers\GenericQuadIterator;
-use rdfInterface\Literal;
-use rdfInterface\Quad;
-use rdfInterface\DatasetCompare;
-use rdfInterface\Term;
-use rdfInterface\TermCompare;
-use rdfInterface\QuadCompare;
+use rdfInterface\LiteralInterface as Literal;
+use rdfInterface\QuadInterface as Quad;
+use rdfInterface\DatasetCompareInterface as DatasetCompare;
+use rdfInterface\TermInterface as Term;
+use rdfInterface\TermCompareInterface as TermCompare;
+use rdfInterface\QuadCompareInterface as QuadCompare;
 
 /**
  * Description of LoggerTest
  *
  * @author zozlak
  */
-abstract class DatasetCompareTest extends \PHPUnit\Framework\TestCase {
+abstract class DatasetCompareInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
@@ -78,13 +78,13 @@ abstract class DatasetCompareTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($d1->none($d2));
 
         // callable
-        $fn = function(Quad $x): bool {
+        $fn = function (Quad $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $this->assertTrue($d1->any($fn));
         $this->assertFalse($d1->none($fn));
 
-        $fn = function(Quad $x): bool {
+        $fn = function (Quad $x): bool {
             return $x->getSubject()->getValue() === 'aaa';
         };
         $this->assertFalse($d1->any($fn));
@@ -111,11 +111,11 @@ abstract class DatasetCompareTest extends \PHPUnit\Framework\TestCase {
         $d1   = static::getDataset();
         $d1[] = self::$quads[0];
         $d1[] = self::$quads[3];
-        $fn   = function(Quad $x): bool {
+        $fn   = function (Quad $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $this->assertTrue($d1->every($fn));
-        $fn = function(Quad $x): bool {
+        $fn = function (Quad $x): bool {
             $obj = $x->getObject();
             return $obj instanceof Literal ? $obj->getLang() === 'en' : false;
         };
@@ -129,7 +129,7 @@ abstract class DatasetCompareTest extends \PHPUnit\Framework\TestCase {
         $fnn = self::$fdf::namedNode('foo');
         $fq  = self::$fdf::quad($fnn, $fnn, $fnn);
         $fqt = static::getQuadTemplate($fnn);
-        $fc  = function($x) use($fqt) {
+        $fc  = function ($x) use ($fqt) {
             return $fqt->equals($x);
         };
 

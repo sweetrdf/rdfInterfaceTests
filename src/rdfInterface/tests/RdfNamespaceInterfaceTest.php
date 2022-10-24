@@ -28,14 +28,14 @@ namespace rdfInterface\tests;
 
 use OutOfBoundsException;
 use BadMethodCallException;
-use rdfInterface\RdfNamespace;
+use rdfInterface\RdfNamespaceInterface as RdfNamespace;
 
 /**
  * Description of RdfNamespaceTest
  *
  * @author zozlak
  */
-abstract class RdfNamespaceTest extends \PHPUnit\Framework\TestCase {
+abstract class RdfNamespaceInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 

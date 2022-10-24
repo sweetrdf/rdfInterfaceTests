@@ -28,19 +28,19 @@ namespace rdfInterface\tests;
 
 use OutOfBoundsException;
 use rdfHelpers\GenericQuadIterator;
-use rdfInterface\Literal;
-use rdfInterface\Quad;
-use rdfInterface\Dataset;
-use rdfInterface\QuadCompare;
-use rdfInterface\Term;
-use rdfInterface\TermCompare;
+use rdfInterface\LiteralInterface as Literal;
+use rdfInterface\QuadInterface as Quad;
+use rdfInterface\DatasetInterface as Dataset;
+use rdfInterface\QuadCompareInterface as QuadCompare;
+use rdfInterface\TermInterface as Term;
+use rdfInterface\TermCompareInterface as TermCompare;
 
 /**
  * Description of LoggerTest
  *
  * @author zozlak
  */
-abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
+abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
@@ -105,12 +105,12 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         }
 
         // by callback
-        $fn = function(Quad $q, Dataset $d) {
+        $fn = function (Quad $q, Dataset $d) {
             return $q->getSubject()->getValue() === 'bar';
         };
         $this->assertTrue(self::$quads[2]->equals($d[$fn]));
         try {
-            $fn = function(Quad $q, Dataset $d) {
+            $fn = function (Quad $q, Dataset $d) {
                 return $q->getPredicate()->getValue() === 'bar';
             };
             $x = $d[$fn];
@@ -189,7 +189,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         // 1 - baz foo bar
         // 2 - bar baz foo
         // 3 + foo bar "baz"@en graph
-        $fn = function(Quad $q, Dataset $d) {
+        $fn = function (Quad $q, Dataset $d) {
             return $q->getGraph()->getValue() === 'graph';
         };
         $d[$fn] = self::$quads[2];
@@ -199,7 +199,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $d[]    = self::$quads[3];
         try {
             // many matches
-            $fn = function(Quad $q, Dataset $d) {
+            $fn = function (Quad $q, Dataset $d) {
                 return $q->getSubject()->getValue() === 'foo';
             };
             $d[$fn] = self::$quads[1];
@@ -209,7 +209,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         }
         try {
             // no match
-            $fn = function(Quad $q, Dataset $d) {
+            $fn = function (Quad $q, Dataset $d) {
                 return $q->getSubject()->getValue() === 'aaa';
             };
             $d[$fn] = self::$quads[1];
@@ -232,7 +232,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $this->assertCount(2, $d);
         $this->assertNotContains(self::$quads[1], $d);
         // by callable
-        $fn = function(Quad $x) {
+        $fn = function (Quad $x) {
             return $x->getSubject()->getValue() === 'bar';
         };
         unset($d[$fn]);
@@ -311,7 +311,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($d1->equals($d2));
 
         // callable
-        $fn = function(Quad $x): bool {
+        $fn = function (Quad $x): bool {
             return false;
         };
         $d2 = $d1->copy($fn);
@@ -344,7 +344,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $this->assertCount(0, $d2);
 
         // callable
-        $fn = function(Quad $x): bool {
+        $fn = function (Quad $x): bool {
             return true;
         };
         $d2 = $d1->copyExcept($fn);
@@ -390,7 +390,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $this->assertFalse($d2->equals($d1));
 
         // callable
-        $fn = function(Quad $x): bool {
+        $fn = function (Quad $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $d2 = $d1->copy();
@@ -434,7 +434,7 @@ abstract class DatasetTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($d2->equals($d1));
 
         // callable
-        $fn = function(Quad $x): bool {
+        $fn = function (Quad $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $d2 = $d1->copy();

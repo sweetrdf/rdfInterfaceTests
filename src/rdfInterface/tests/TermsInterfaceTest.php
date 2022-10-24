@@ -28,14 +28,17 @@ namespace rdfInterface\tests;
 
 use BadMethodCallException;
 use zozlak\RdfConstants as RDF;
-use rdfInterface\Literal;
+use rdfInterface\LiteralInterface as Literal;
+use rdfInterface\NamedNodeInterface as NamedNode;
+use rdfInterface\BlankNodeInterface as BlankNode;
+use rdfInterface\QuadInterface as Quad;
 
 /**
  * Description of TermsTest
  *
  * @author zozlak
  */
-abstract class TermsTest extends \PHPUnit\Framework\TestCase {
+abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
@@ -49,7 +52,7 @@ abstract class TermsTest extends \PHPUnit\Framework\TestCase {
         foreach ($n as $i) {
             $this->assertTrue($i->equals($i));
             $this->assertFalse($i->equals($bn));
-            $this->assertInstanceOf(\rdfInterface\NamedNode::class, $i);
+            $this->assertInstanceOf(NamedNode::class, $i);
             $this->assertIsString((string) $i);
         }
         $this->assertEquals('foo', $n[0]->getValue());
@@ -81,7 +84,7 @@ abstract class TermsTest extends \PHPUnit\Framework\TestCase {
         foreach ($n as $i) {
             $this->assertTrue($i->equals($i));
             $this->assertFalse($i->equals($nn));
-            $this->assertInstanceOf(\rdfInterface\BlankNode::class, $i);
+            $this->assertInstanceOf(BlankNode::class, $i);
             $this->assertIsString((string) $i);
             $this->assertStringStartsWith('_:', $i->getValue());
         }
@@ -116,7 +119,7 @@ abstract class TermsTest extends \PHPUnit\Framework\TestCase {
         ];
         $nn = self::$df::NamedNode('1');
         foreach ($l as $i) {
-            $this->assertInstanceOf(\rdfInterface\Literal::class, $i);
+            $this->assertInstanceOf(Literal::class, $i);
             $this->assertSame('1', $i->getValue());
             $this->assertSame('1', $i->getValue(Literal::CAST_LEXICAL_FORM));
             $this->assertTrue($i->equals($i));
@@ -148,7 +151,7 @@ abstract class TermsTest extends \PHPUnit\Framework\TestCase {
         ];
         $nn = self::$df::NamedNode('1');
         foreach ($l as $i) {
-            $this->assertInstanceOf(\rdfInterface\Literal::class, $i);
+            $this->assertInstanceOf(Literal::class, $i);
             $this->assertSame($i->getValue(), $i->getValue(Literal::CAST_LEXICAL_FORM));
             $this->assertTrue($i->equals($i));
             $this->assertFalse($i->equals($nn));
@@ -344,7 +347,7 @@ abstract class TermsTest extends \PHPUnit\Framework\TestCase {
         ];
         foreach ($q as $n => $i) {
             $this->assertTrue($i->equals($i));
-            $this->assertInstanceOf(\rdfInterface\Quad::class, $i);
+            $this->assertInstanceOf(Quad::class, $i);
             $this->assertFalse($i->equals($nn1));
             if ($n < 6) {
                 $this->assertTrue($nn3->equals($i->getSubject()));

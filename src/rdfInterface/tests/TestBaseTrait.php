@@ -26,7 +26,7 @@
 
 namespace rdfInterface\tests;
 
-use rdfInterface\DataFactory;
+use rdfInterface\DataFactoryInterface;
 
 /**
  * Description of TestBaseTrait
@@ -35,16 +35,16 @@ use rdfInterface\DataFactory;
  */
 trait TestBaseTrait {
 
-    abstract public static function getDataFactory(): DataFactory;
+    abstract public static function getDataFactory(): DataFactoryInterface;
 
-    abstract public static function getForeignDataFactory(): DataFactory;
+    abstract public static function getForeignDataFactory(): DataFactoryInterface;
 
-    protected static DataFactory $df;
-    protected static DataFactory $fdf; // foreign \rdfInterface\DataFactory implementation
+    protected static DataFactoryInterface $df;
+    protected static DataFactoryInterface $fdf; // foreign \rdfInterface\DataFactoryInterface implementation
 
     /**
      *
-     * @var array<\rdfInterface\Quad>
+     * @var array<\rdfInterface\QuadInterface>
      */
     protected static array $quads;
 

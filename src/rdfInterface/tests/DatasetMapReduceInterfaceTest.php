@@ -26,19 +26,19 @@
 
 namespace rdfInterface\tests;
 
-use rdfInterface\Literal;
-use rdfInterface\Quad;
-use rdfInterface\DatasetMapReduce;
-use rdfInterface\Term;
-use rdfInterface\TermCompare;
-use rdfInterface\QuadCompare;
+use rdfInterface\LiteralInterface as Literal;
+use rdfInterface\QuadInterface as Quad;
+use rdfInterface\DatasetMapReduceInterface as DatasetMapReduce;
+use rdfInterface\TermInterface as Term;
+use rdfInterface\TermCompareInterface as TermCompare;
+use rdfInterface\QuadCompareInterface as QuadCompare;
 
 /**
  * Description of LoggerTest
  *
  * @author zozlak
  */
-abstract class DatasetMapReduceTest extends \PHPUnit\Framework\TestCase {
+abstract class DatasetMapReduceInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
