@@ -68,9 +68,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d = static::getDataset();
         $d->add(new GenericQuadIterator(self::$quads));
         foreach ($d as $k => $v) {
-            if ($v === null) {
-                throw new \RuntimeException();
-            }
+            $this->assertNotNull($v);
             $this->assertTrue($v->equals(self::$quads[$k]));
         }
     }
@@ -525,17 +523,6 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             throw new \RuntimeException();
         }, static::getQuadTemplate(self::$df::namedNode('foobar')));
         $this->assertTrue($d2->equals($d));
-    }
-
-    public function testCurrent(): void {
-        $d   = static::getDataset();
-        $this->assertNull($d->current());
-        $d[] = self::$quads[0];
-        if ($d->current() === null) {
-            throw new \RuntimeException();
-        } else {
-            $this->assertTrue(self::$quads[0]->equals($d->current()));
-        }
     }
 
     public function testForeignTerms(): void {
