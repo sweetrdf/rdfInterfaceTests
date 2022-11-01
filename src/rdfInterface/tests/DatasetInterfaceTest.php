@@ -73,7 +73,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         }
     }
 
-    public function testOffsetGetSmall(): void {
+    public function testOffsetExistsGet(): void {
         $d      = static::getDataset();
         $d->add(new GenericQuadIterator(self::$quads));
         $triple = self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('bar'), self::$df::literal('baz', 'de'));
@@ -118,8 +118,15 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         }
 
         // by integer
+        $this->assertTrue(isset($d[0]));
         $quad = $d[0];
         $this->assertEquals(1, array_sum(array_map(fn($x) => $x->equals($quad), self::$quads)));
+        try {
+            isset($d[1]);
+            $this->assertTrue(false);
+        } catch (OutOfBoundsException) {
+            
+        }
         try {
             $quad = $d[1];
             $this->assertTrue(false);
@@ -127,12 +134,14 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             
         }
         $d = static::getDataset();
+        $this->assertFalse(isset($d[0]));
         try {
             $quad = $d[0];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
             
         }
+        $this->assertEquals("fallback", $d[0] ?? "fallback");
     }
 
     public function testOffsetSet(): void {
