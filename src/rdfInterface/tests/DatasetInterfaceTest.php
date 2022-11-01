@@ -123,11 +123,6 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(1, array_sum(array_map(fn($x) => $x->equals($quad), self::$quads)));
         $this->assertFalse(isset($d[1])); // isset() internally suppresses exceptions
         try {
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            
-        }
-        try {
             $quad = $d[1];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
