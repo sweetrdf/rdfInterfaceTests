@@ -529,6 +529,18 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($d2->equals($d));
     }
 
+    public function testGetIterator(): void {
+        $d   = static::getDataset();
+        $d[] = self::$quads[0];
+        $d[] = self::$quads[1];
+        $n   = 0;
+        foreach ($d->getIterator(self::$quads[1]) as $i) {
+            $this->assertTrue(self::$quads[1]->equals($i));
+            $n++;
+        }
+        $this->assertEquals(1, $n);
+    }
+
     public function testForeignTerms(): void {
         $nn = self::$df::namedNode('foo');
         $bn = self::$df::blankNode('bar');
