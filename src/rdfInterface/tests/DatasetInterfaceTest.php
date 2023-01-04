@@ -36,7 +36,7 @@ use rdfInterface\TermInterface as Term;
 use rdfInterface\TermCompareInterface as TermCompare;
 
 /**
- * Description of LoggerTest
+ * Description of DatasetInterfaceTest
  *
  * @author zozlak
  */
