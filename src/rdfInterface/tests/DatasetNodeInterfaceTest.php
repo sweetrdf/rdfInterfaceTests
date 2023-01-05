@@ -31,20 +31,20 @@ use rdfInterface\DatasetInterface as Dataset;
 use rdfInterface\QuadCompareInterface as QuadCompare;
 use rdfInterface\TermInterface as Term;
 use rdfInterface\TermCompareInterface as TermCompare;
-use rdfInterface\NodeInterface as Node;
+use rdfInterface\DatasetNodeInterface as DatasetNode;
 
 /**
  * Description of NodeInterfaceTest
  *
  * @author zozlak
  */
-abstract class NodeInterfaceTest extends \PHPUnit\Framework\TestCase {
+abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
     abstract public static function getDataset(): Dataset;
 
-    abstract public static function getNode(Term $node, Dataset $dataset): Node;
+    abstract public static function getDatasetNode(Dataset $dataset, Term $node): DatasetNode;
 
     abstract public static function getQuadTemplate(TermCompare | Term | null $subject = null,
                                                     TermCompare | Term | null $predicate = null,
@@ -52,27 +52,48 @@ abstract class NodeInterfaceTest extends \PHPUnit\Framework\TestCase {
                                                     TermCompare | Term | null $graph = null): QuadCompare;
 
     public function testBasic(): void {
-        $dataset  = static::getDataset();
+        $dataset = static::getDataset();
         $dataset->add(new GenericQuadIterator(self::$quads));
-        $term     = self::$quads[0]->getSubject();
-        $node     = static::getNode($term, $dataset);
+        $term    = self::$quads[0]->getSubject();
+        $node    = static::getDatasetNode($dataset, $term);
 
-        $this->assertTrue($node->getTerm()->equals($term));
+        $this->assertTrue($node->getNode()->equals($term));
         $this->assertTrue($node->getDataset()->equals($dataset));
-        $this->assertCount(2, $node->getDataset()->copy(static::getQuadTemplate($node->getTerm())));
+        $this->assertCount(2, $node->getDataset()->copy(static::getQuadTemplate($node->getNode())));
 
         $emptyDataset = static::getDataset();
         $node         = $node->withDataset($emptyDataset);
-        $this->assertTrue($node->getTerm()->equals($term));
+        $this->assertTrue($node->getNode()->equals($term));
         $this->assertTrue($node->getDataset()->equals($emptyDataset));
         $this->assertFalse($node->getDataset()->equals($dataset));
-        $this->assertCount(0, $node->getDataset()->copy(static::getQuadTemplate($node->getTerm())));
+        $this->assertCount(0, $node->getDataset()->copy(static::getQuadTemplate($node->getNode())));
 
         $termOutOfGraph = static::$quads[0];
-        $node           = $node->withTerm($termOutOfGraph);
-        $this->assertTrue($node->getTerm()->equals($termOutOfGraph));
-        $this->assertFalse($node->getTerm()->equals($term));
+        $node           = $node->withNode($termOutOfGraph);
+        $this->assertTrue($node->getNode()->equals($termOutOfGraph));
+        $this->assertFalse($node->getNode()->equals($term));
         $this->assertTrue($node->getDataset()->equals($emptyDataset));
         $this->assertFalse($node->getDataset()->equals($dataset));
+    }
+
+    public function testIterator(): void {
+        $dataset = static::getDataset();
+        $dataset->add(new GenericQuadIterator(self::$quads));
+        $term    = self::$quads[0]->getSubject();
+        $node    = static::getDatasetNode($dataset, $term);
+
+        $n = 0;
+        foreach ($node as $i) {
+            $n++;
+            $this->assertTrue(self::$quads[0]->equals($i) || self::$quads[3]->equals($i));
+        }
+        $this->assertEquals(2, $n);
+
+        $n = 0;
+        foreach ($node->getIterator(fn($x) => $x->getGraph()->equals(self::$quads[3]->getGraph())) as $i) {
+            $n++;
+            $this->assertTrue($i->equals(self::$quads[3]));
+        }
+        $this->assertEquals(1, $n);
     }
 }
