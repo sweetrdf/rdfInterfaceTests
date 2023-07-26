@@ -61,8 +61,17 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
                                                     TermCompareInterface | TermInterface | null $graph = null): QuadCompareInterface;
 
     public function testGetValue(): void {
+        $n = self::$quads[0]->getSubject();
+        $d = static::getDatasetNode($n);
+        $this->assertEquals($n->getValue(), $d->getValue());
+
         $d = static::getDatasetNode(self::$quads[0]);
-        $this->assertTrue(self::$quads[0]->equals($d->getValue()));
+        try {
+            $d->getValue();
+            $this->assertTrue(false);
+        } catch (\BadMethodCallException $ex) {
+            $this->assertTrue(true);
+        }
     }
 
     public function testWithGetNode(): void {
