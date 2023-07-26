@@ -55,13 +55,13 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     public function testAddQuads(): void {
         $d = static::getDataset();
-        for ($i = 0; $i + 1 < count(self::$quads); $i++) {
+        for ($i = 0; $i < 3; $i++) {
             $d->add(self::$quads[$i]);
         }
-        $this->assertEquals(3, count($d));
+        $this->assertCount(3, $d);
 
         $d->add(new GenericQuadIterator(self::$quads));
-        $this->assertEquals(4, count($d));
+        $this->assertCount(4, $d);
     }
 
     public function testIterator(): void {
@@ -88,7 +88,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $x = $d[$triple];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
 
         // by QuadTemplate
@@ -99,7 +99,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $x    = $d[$tmpl];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
 
         // by callback
@@ -114,7 +114,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $x = $d[$fn];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
 
         // by integer
@@ -126,7 +126,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $quad = $d[1];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
         $d = static::getDataset();
         $this->assertFalse(isset($d[0]));
@@ -134,7 +134,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $quad = $d[0];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
         $this->assertEquals("fallback", $d[0] ?? "fallback");
     }
@@ -168,7 +168,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $d[self::$quads[3]] = self::$quads[1];
             $this->assertTrue(false);
         } catch (OutOfBoundsException $ex) {
-            
+            $this->assertTrue(true);
         }
 
         // by QuadTemplate
@@ -186,21 +186,21 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $d[static::getQuadTemplate(self::$df::namedNode('foo'))] = self::$quads[0];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
         try {
             // no quad matches
             $d[static::getQuadTemplate(self::$df::namedNode('bar'), self::$df::namedNode('foo'))] = self::$quads[0];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
         try {
             // no quad matches
             $d[static::getQuadTemplate(self::$df::namedNode('aaa'))] = self::$quads[0];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
 
         // by callback
@@ -224,7 +224,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $d[$fn] = self::$quads[1];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
         try {
             // no match
@@ -234,14 +234,21 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
             $d[$fn] = self::$quads[1];
             $this->assertTrue(false);
         } catch (OutOfBoundsException) {
-            
+            $this->assertTrue(true);
         }
     }
 
     public function testOffsetUnSet(): void {
-        $d  = static::getDataset();
+        $d = static::getDataset();
         $d->add(new GenericQuadIterator(self::$quads));
         $this->assertCount(4, $d);
+        // many matches
+        try {
+            unset($d[static::getQuadTemplate(self::$df->namedNode('foo'))]);
+            $this->assertTrue(false);
+        } catch (OutOfBoundsException $ex) {
+            $this->assertTrue(true);
+        }
         // by Quad
         unset($d[self::$quads[0]]);
         $this->assertCount(3, $d);
@@ -425,10 +432,11 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d1->add(new GenericQuadIterator(self::$quads));
 
         // Quad
-        $d2 = $d1->copy();
-        $d2->deleteExcept(self::$quads[0]->withSubject(self::$df::blankNode()));
+        $d2      = $d1->copy();
+        $deleted = $d2->deleteExcept(self::$quads[0]->withSubject(self::$df::blankNode()));
         $this->assertCount(0, $d2);
         $this->assertFalse($d2->equals($d1));
+        $this->assertTrue($deleted->equals($d1));
 
         $d2 = $d1->copy();
         $d2->deleteExcept(self::$quads[0]);
@@ -634,5 +642,193 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
 
         $d3 = $d->xor($fqi);
         $this->assertEquals(0, count($d3));
+
+        // any / every / none
+        $fc = function ($x) use ($fqt) {
+            return $fqt->equals($x);
+        };
+        $d = static::getDataset();
+        $d->add($q);
+        $this->assertTrue(isset($d[$fq]));
+        foreach ([$fq, $fqt, $fc] as $i) { // add callable
+            $this->assertTrue($d->any($i), "Tested class " . $fq::class);
+            $this->assertTrue($d->every($i), "Tested class " . $fq::class);
+            $this->assertFalse($d->none($i), "Tested class " . $fq::class);
+        }
+    }
+
+    public function testAnyNone(): void {
+        $d1 = static::getDataset();
+        $d1->add(new GenericQuadIterator(self::$quads));
+
+        // Quad
+        $this->assertTrue($d1->any(self::$quads[0]));
+        $this->assertFalse($d1->none(self::$quads[0]));
+        $this->assertFalse($d1->any(self::$quads[0]->withSubject(self::$df::namedNode('aaa'))));
+        $this->assertTrue($d1->none(self::$quads[0]->withSubject(self::$df::namedNode('aaa'))));
+
+        // QuadTemplate
+        $this->assertTrue($d1->any(static::getQuadTemplate(self::$df::namedNode('foo'))));
+        $this->assertFalse($d1->none(static::getQuadTemplate(self::$df::namedNode('foo'))));
+        $this->assertFalse($d1->any(static::getQuadTemplate(self::$df::namedNode('aaa'))));
+        $this->assertTrue($d1->none(static::getQuadTemplate(self::$df::namedNode('aaa'))));
+
+        // QuadIterator
+        $d2   = static::getDataset();
+        $d2[] = self::$quads[0];
+        $this->assertTrue($d1->any($d2));
+        $this->assertFalse($d1->none($d2));
+
+        $d2   = static::getDataset();
+        $d2[] = self::$quads[0]->withSubject(self::$df::namedNode('aaa'));
+        $this->assertFalse($d1->any($d2));
+        $this->assertTrue($d1->none($d2));
+
+        // callable
+        $fn = function (Quad $x): bool {
+            return $x->getSubject()->getValue() === 'foo';
+        };
+        $this->assertTrue($d1->any($fn));
+        $this->assertFalse($d1->none($fn));
+
+        $fn = function (Quad $x): bool {
+            return $x->getSubject()->getValue() === 'aaa';
+        };
+        $this->assertFalse($d1->any($fn));
+        $this->assertTrue($d1->none($fn));
+    }
+
+    public function testEvery(): void {
+        // Quad
+        $d1   = static::getDataset();
+        $d1[] = self::$quads[0];
+        $this->assertTrue($d1->every(self::$quads[0]));
+        $d1[] = self::$quads[1];
+        $this->assertFalse($d1->every(self::$quads[0]));
+        $this->assertFalse($d1->every(self::$quads[0]->withSubject(self::$df::namedNode('aaa'))));
+
+        // QuadTemplate
+        $d1   = static::getDataset();
+        $d1[] = self::$quads[0];
+        $d1[] = self::$quads[3];
+        $this->assertTrue($d1->every(static::getQuadTemplate(self::$df::namedNode('foo'))));
+        $this->assertFalse($d1->none(static::getQuadTemplate(null, null, self::$df::literal('baz', 'en'))));
+
+        // callable
+        $d1   = static::getDataset();
+        $d1[] = self::$quads[0];
+        $d1[] = self::$quads[3];
+        $fn   = function (Quad $x): bool {
+            return $x->getSubject()->getValue() === 'foo';
+        };
+        $this->assertTrue($d1->every($fn));
+        $fn = function (Quad $x): bool {
+            $obj = $x->getObject();
+            return $obj instanceof Literal ? $obj->getLang() === 'en' : false;
+        };
+        $this->assertFalse($d1->every($fn));
+    }
+
+    public function testList(): void {
+        //0 <foo> <bar> "baz"
+        //1 <baz> <foo> <bar>
+        //2 <bar> <baz> <foo>
+        //3 <foo> <bar> "baz"@en <graph>
+        $d = static::getDataset();
+        $d->add(new GenericQuadIterator(self::$quads));
+
+        $list = iterator_to_array($d->listSubjects());
+        $this->assertEquals(3, count($list));
+        $list = iterator_to_array($d->listSubjects($this->getQuadTemplate(null, static::$df::namedNode('bar'))));
+        $this->assertEquals(1, count($list));
+        $this->assertTrue(static::$df::namedNode('foo')->equals($list[0]));
+        $list = iterator_to_array($d->listSubjects($this->getQuadTemplate(static::$df::namedNode('foobar'))));
+        $this->assertEquals(0, count($list));
+
+        $list = iterator_to_array($d->listPredicates());
+        $this->assertEquals(3, count($list));
+        $list = iterator_to_array($d->listPredicates($this->getQuadTemplate(static::$df::namedNode('foo'))));
+        $this->assertEquals(1, count($list));
+        $this->assertTrue(static::$df::namedNode('bar')->equals($list[0]));
+        $list = iterator_to_array($d->listPredicates($this->getQuadTemplate(static::$df::namedNode('foobar'))));
+        $this->assertEquals(0, count($list));
+
+        $list = iterator_to_array($d->listObjects());
+        $this->assertEquals(4, count($list));
+        $list = iterator_to_array($d->listObjects($this->getQuadTemplate(static::$df::namedNode('bar'))));
+        $this->assertEquals(1, count($list));
+        $this->assertTrue(static::$df::namedNode('foo')->equals($list[0]));
+        $list = iterator_to_array($d->listObjects($this->getQuadTemplate(static::$df::namedNode('foobar'))));
+        $this->assertEquals(0, count($list));
+
+        $list = iterator_to_array($d->listGraphs());
+        $this->assertEquals(2, count($list));
+        $list = iterator_to_array($d->listGraphs($this->getQuadTemplate(null, static::$df::namedNode('bar'))));
+        $this->assertEquals(2, count($list));
+        $list = iterator_to_array($d->listGraphs($this->getQuadTemplate(null, null, static::$df::literal('baz', 'en'))));
+        $this->assertEquals(1, count($list));
+        $this->assertTrue(static::$df::namedNode('graph')->equals($list[0]));
+        $list = iterator_to_array($d->listGraphs($this->getQuadTemplate(static::$df::namedNode('foobar'))));
+        $this->assertEquals(0, count($list));
+    }
+
+    public function testNested(): void {
+        //0 <foo> <bar> "baz"
+        //1 <baz> <foo> <bar>
+        //2 <bar> <baz> <foo>
+        //3 <foo> <bar> "baz"@en <graph>
+        $d = static::getDataset();
+        $d->add(new GenericQuadIterator(self::$quads));
+        $d->add(self::$quads[3]->withPredicate(self::$quads[2]->getPredicate()));
+
+        $counts = ['foo' => 2, 'bar' => 1, 'baz' => 1];
+        foreach ($d->listSubjects() as $sbj) {
+            $n  = 0;
+            $d1 = $d->copy($this->getQuadTemplate($sbj));
+            foreach ($d1->listPredicates() as $pred) {
+                $n++;
+                $d2 = $d1->copy($this->getQuadTemplate(null, $pred));
+            }
+            $this->assertEquals($counts[$sbj->getValue()], $n, $sbj->getValue());
+        }
+    }
+
+    public function testMap(): void {
+        $d1   = static::getDataset();
+        $d1[] = self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('baz'), self::$df::literal(1));
+        $d1[] = self::$df::quad(self::$df::namedNode('bar'), self::$df::namedNode('baz'), self::$df::literal(5));
+        $d2   = $d1->map(function (Quad $x) {
+            $obj = $x->getObject();
+            return $obj instanceof Literal ? $x->withObject($obj->withValue((float) (string) $obj->getValue() * 2)) : $x;
+        });
+        $this->assertCount(2, $d1);
+        $this->assertEquals(1, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
+        $this->assertEquals(5, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+        $this->assertCount(2, $d2);
+        $this->assertEquals(2, (int) (string) $d2[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
+        $this->assertEquals(10, (int) (string) $d2[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+
+        $d3 = $d2->map(function (Quad $x) {
+            throw new \RuntimeException();
+        }, static::getQuadTemplate(self::$df::namedNode('foobar')));
+        $this->assertEquals(0, count($d3));
+    }
+
+    public function testReduce(): void {
+        $d1   = static::getDataset();
+        $d1[] = self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('baz'), self::$df::literal(1));
+        $d1[] = self::$df::quad(self::$df::namedNode('bar'), self::$df::namedNode('baz'), self::$df::literal(5));
+        $sum  = $d1->reduce(function (float $sum, Quad $x) {
+            return $sum + (float) (string) $x->getObject()->getValue();
+        }, 0);
+        $this->assertEquals(6, $sum);
+        $this->assertCount(2, $d1);
+        $this->assertEquals(1, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
+        $this->assertEquals(5, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
+
+        $sum = $d1->reduce(function (Quad $x) {
+            throw new \RuntimeException();
+        }, -5, static::getQuadTemplate(self::$df::namedNode('foobar')));
+        $this->assertEquals(-5, $sum);
     }
 }
