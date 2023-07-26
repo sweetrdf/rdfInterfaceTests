@@ -26,12 +26,12 @@
 
 namespace rdfInterface\tests;
 
-use rdfInterface\TermInterface as Term;
-use rdfInterface\BlankNodeInterface as BlankNode;
-use rdfInterface\NamedNodeInterface as NamedNode;
-use rdfInterface\LiteralInterface as Literal;
-use rdfInterface\DefaultGraphInterface as DefaultGraph;
-use rdfInterface\QuadInterface as Quad;
+use rdfInterface\TermInterface;
+use rdfInterface\BlankNodeInterface;
+use rdfInterface\NamedNodeInterface;
+use rdfInterface\LiteralInterface;
+use rdfInterface\DefaultGraphInterface;
+use rdfInterface\QuadInterface;
 
 /**
  * Description of LoggerTest
@@ -44,26 +44,26 @@ abstract class DataFactoryInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     public function testCreateBlankNode(): void {
         $bn = self::$df::blankNode();
-        $this->assertInstanceOf(Term::class, $bn);
-        $this->assertInstanceOf(BlankNode::class, $bn);
+        $this->assertInstanceOf(TermInterface::class, $bn);
+        $this->assertInstanceOf(BlankNodeInterface::class, $bn);
     }
 
     public function testCreateNamedNode(): void {
         $nn = self::$df::namedNode('foo');
-        $this->assertInstanceOf(Term::class, $nn);
-        $this->assertInstanceOf(NamedNode::class, $nn);
+        $this->assertInstanceOf(TermInterface::class, $nn);
+        $this->assertInstanceOf(NamedNodeInterface::class, $nn);
     }
 
     public function testCreateLiteral(): void {
         $l = self::$df::literal('foo', 'lang');
-        $this->assertInstanceOf(Term::class, $l);
-        $this->assertInstanceOf(Literal::class, $l);
+        $this->assertInstanceOf(TermInterface::class, $l);
+        $this->assertInstanceOf(LiteralInterface::class, $l);
     }
 
     public function testCreateDefaultGraph(): void {
         $dg = self::$df::defaultGraph();
-        $this->assertInstanceOf(Term::class, $dg);
-        $this->assertInstanceOf(DefaultGraph::class, $dg);
+        $this->assertInstanceOf(TermInterface::class, $dg);
+        $this->assertInstanceOf(DefaultGraphInterface::class, $dg);
     }
 
     public function testCreateQuad(): void {
@@ -73,7 +73,7 @@ abstract class DataFactoryInterfaceTest extends \PHPUnit\Framework\TestCase {
         $dg = self::$df::defaultGraph();
         
         $q = self::$df::quad($bn, $nn, $l, $dg);
-        $this->assertInstanceOf(Term::class, $q);
-        $this->assertInstanceOf(Quad::class, $q);
+        $this->assertInstanceOf(TermInterface::class, $q);
+        $this->assertInstanceOf(QuadInterface::class, $q);
     }
 }

@@ -28,12 +28,12 @@ namespace rdfInterface\tests;
 
 use OutOfBoundsException;
 use rdfHelpers\GenericQuadIterator;
-use rdfInterface\LiteralInterface as Literal;
-use rdfInterface\QuadInterface as Quad;
-use rdfInterface\DatasetInterface as Dataset;
-use rdfInterface\QuadCompareInterface as QuadCompare;
-use rdfInterface\TermInterface as Term;
-use rdfInterface\TermCompareInterface as TermCompare;
+use rdfInterface\LiteralInterface;
+use rdfInterface\QuadInterface;
+use rdfInterface\DatasetInterface;
+use rdfInterface\QuadCompareInterface;
+use rdfInterface\TermInterface;
+use rdfInterface\TermCompareInterface;
 
 /**
  * Description of DatasetInterfaceTest
@@ -44,14 +44,14 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
-    abstract public static function getDataset(): Dataset;
+    abstract public static function getDataset(): DatasetInterface;
 
-    abstract public static function getForeignDataset(): Dataset; // foreign \rdfInterface\Dataset implementation
+    abstract public static function getForeignDataset(): DatasetInterface; // foreign \rdfInterface\Dataset implementation
 
-    abstract public static function getQuadTemplate(TermCompare | Term | null $subject = null,
-                                                    TermCompare | Term | null $predicate = null,
-                                                    TermCompare | Term | null $object = null,
-                                                    TermCompare | Term | null $graph = null): QuadCompare;
+    abstract public static function getQuadTemplate(TermCompareInterface | TermInterface | null $subject = null,
+                                                    TermCompareInterface | TermInterface | null $predicate = null,
+                                                    TermCompareInterface | TermInterface | null $object = null,
+                                                    TermCompareInterface | TermInterface | null $graph = null): QuadCompareInterface;
 
     public function testAddQuads(): void {
         $d = static::getDataset();
@@ -103,12 +103,12 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         }
 
         // by callback
-        $fn = function (Quad $q, Dataset $d) {
+        $fn = function (QuadInterface $q, DatasetInterface $d) {
             return $q->getSubject()->getValue() === 'bar';
         };
         $this->assertTrue(self::$quads[2]->equals($d[$fn]));
         try {
-            $fn = function (Quad $q, Dataset $d) {
+            $fn = function (QuadInterface $q, DatasetInterface $d) {
                 return $q->getPredicate()->getValue() === 'bar';
             };
             $x = $d[$fn];
@@ -208,7 +208,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         // 1 - baz foo bar
         // 2 - bar baz foo
         // 3 + foo bar "baz"@en graph
-        $fn = function (Quad $q, Dataset $d) {
+        $fn = function (QuadInterface $q, DatasetInterface $d) {
             return $q->getGraph()->getValue() === 'graph';
         };
         $d[$fn] = self::$quads[2];
@@ -218,7 +218,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d[]    = self::$quads[3];
         try {
             // many matches
-            $fn = function (Quad $q, Dataset $d) {
+            $fn = function (QuadInterface $q, DatasetInterface $d) {
                 return $q->getSubject()->getValue() === 'foo';
             };
             $d[$fn] = self::$quads[1];
@@ -228,7 +228,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         }
         try {
             // no match
-            $fn = function (Quad $q, Dataset $d) {
+            $fn = function (QuadInterface $q, DatasetInterface $d) {
                 return $q->getSubject()->getValue() === 'aaa';
             };
             $d[$fn] = self::$quads[1];
@@ -258,7 +258,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertCount(2, $d);
         $this->assertNotContains(self::$quads[1], $d);
         // by callable
-        $fn = function (Quad $x) {
+        $fn = function (QuadInterface $x) {
             return $x->getSubject()->getValue() === 'bar';
         };
         unset($d[$fn]);
@@ -337,7 +337,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($d1->equals($d2));
 
         // callable
-        $fn = function (Quad $x): bool {
+        $fn = function (QuadInterface $x): bool {
             return false;
         };
         $d2 = $d1->copy($fn);
@@ -370,7 +370,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertCount(0, $d2);
 
         // callable
-        $fn = function (Quad $x): bool {
+        $fn = function (QuadInterface $x): bool {
             return true;
         };
         $d2 = $d1->copyExcept($fn);
@@ -416,7 +416,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertFalse($d2->equals($d1));
 
         // callable
-        $fn = function (Quad $x): bool {
+        $fn = function (QuadInterface $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $d2 = $d1->copy();
@@ -461,7 +461,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($d2->equals($d1));
 
         // callable
-        $fn = function (Quad $x): bool {
+        $fn = function (QuadInterface $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $d2 = $d1->copy();
@@ -516,22 +516,22 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d   = static::getDataset();
         $d[] = self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('baz'), self::$df::literal(1));
         $d[] = self::$df::quad(self::$df::namedNode('bar'), self::$df::namedNode('baz'), self::$df::literal(5));
-        $d->forEach(function (Quad $x): Quad {
+        $d->forEach(function (QuadInterface $x): QuadInterface {
             $obj = $x->getObject();
-            return $obj instanceof Literal ? $x->withObject($obj->withValue((float) $obj->getValue() * 2)) : $x;
+            return $obj instanceof LiteralInterface ? $x->withObject($obj->withValue((float) $obj->getValue() * 2)) : $x;
         });
         $this->assertEquals(2, (int) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
         $this->assertEquals(10, (int) $d[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
 
-        $d->forEach(function (Quad $x): ?Quad {
+        $d->forEach(function (QuadInterface $x): ?QuadInterface {
             $obj = $x->getObject();
-            return $obj instanceof Literal && $obj->getValue() < 5 ? $x : null;
+            return $obj instanceof LiteralInterface && $obj->getValue() < 5 ? $x : null;
         });
         $this->assertCount(1, $d);
         $this->assertEquals(2, (int) $d[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
 
         $d2 = $d->copy();
-        $d->forEach(function (Quad $x): ?Quad {
+        $d->forEach(function (QuadInterface $x): ?QuadInterface {
             throw new \RuntimeException();
         }, static::getQuadTemplate(self::$df::namedNode('foobar')));
         $this->assertTrue($d2->equals($d));
@@ -685,13 +685,13 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($d1->none($d2));
 
         // callable
-        $fn = function (Quad $x): bool {
+        $fn = function (QuadInterface $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $this->assertTrue($d1->any($fn));
         $this->assertFalse($d1->none($fn));
 
-        $fn = function (Quad $x): bool {
+        $fn = function (QuadInterface $x): bool {
             return $x->getSubject()->getValue() === 'aaa';
         };
         $this->assertFalse($d1->any($fn));
@@ -718,13 +718,13 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d1   = static::getDataset();
         $d1[] = self::$quads[0];
         $d1[] = self::$quads[3];
-        $fn   = function (Quad $x): bool {
+        $fn   = function (QuadInterface $x): bool {
             return $x->getSubject()->getValue() === 'foo';
         };
         $this->assertTrue($d1->every($fn));
-        $fn = function (Quad $x): bool {
+        $fn = function (QuadInterface $x): bool {
             $obj = $x->getObject();
-            return $obj instanceof Literal ? $obj->getLang() === 'en' : false;
+            return $obj instanceof LiteralInterface ? $obj->getLang() === 'en' : false;
         };
         $this->assertFalse($d1->every($fn));
     }
@@ -797,9 +797,9 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d1   = static::getDataset();
         $d1[] = self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('baz'), self::$df::literal(1));
         $d1[] = self::$df::quad(self::$df::namedNode('bar'), self::$df::namedNode('baz'), self::$df::literal(5));
-        $d2   = $d1->map(function (Quad $x) {
+        $d2   = $d1->map(function (QuadInterface $x) {
             $obj = $x->getObject();
-            return $obj instanceof Literal ? $x->withObject($obj->withValue((float) (string) $obj->getValue() * 2)) : $x;
+            return $obj instanceof LiteralInterface ? $x->withObject($obj->withValue((float) (string) $obj->getValue() * 2)) : $x;
         });
         $this->assertCount(2, $d1);
         $this->assertEquals(1, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
@@ -808,7 +808,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(2, (int) (string) $d2[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
         $this->assertEquals(10, (int) (string) $d2[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
 
-        $d3 = $d2->map(function (Quad $x) {
+        $d3 = $d2->map(function (QuadInterface $x) {
             throw new \RuntimeException();
         }, static::getQuadTemplate(self::$df::namedNode('foobar')));
         $this->assertEquals(0, count($d3));
@@ -818,7 +818,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d1   = static::getDataset();
         $d1[] = self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('baz'), self::$df::literal(1));
         $d1[] = self::$df::quad(self::$df::namedNode('bar'), self::$df::namedNode('baz'), self::$df::literal(5));
-        $sum  = $d1->reduce(function (float $sum, Quad $x) {
+        $sum  = $d1->reduce(function (float $sum, QuadInterface $x) {
             return $sum + (float) (string) $x->getObject()->getValue();
         }, 0);
         $this->assertEquals(6, $sum);
@@ -826,7 +826,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(1, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('foo'))]->getObject()->getValue());
         $this->assertEquals(5, (int) (string) $d1[static::getQuadTemplate(self::$df::namedNode('bar'))]->getObject()->getValue());
 
-        $sum = $d1->reduce(function (Quad $x) {
+        $sum = $d1->reduce(function (QuadInterface $x) {
             throw new \RuntimeException();
         }, -5, static::getQuadTemplate(self::$df::namedNode('foobar')));
         $this->assertEquals(-5, $sum);

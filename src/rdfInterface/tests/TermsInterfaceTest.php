@@ -28,10 +28,10 @@ namespace rdfInterface\tests;
 
 use BadMethodCallException;
 use zozlak\RdfConstants as RDF;
-use rdfInterface\LiteralInterface as Literal;
-use rdfInterface\NamedNodeInterface as NamedNode;
-use rdfInterface\BlankNodeInterface as BlankNode;
-use rdfInterface\QuadInterface as Quad;
+use rdfInterface\LiteralInterface;
+use rdfInterface\NamedNodeInterface;
+use rdfInterface\BlankNodeInterface;
+use rdfInterface\QuadInterface;
 
 /**
  * Description of TermsTest
@@ -42,7 +42,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
-    public function testNamedNode(): void {
+    public function testNamedNodeInterface(): void {
         $n  = [
             0 => self::$df::namedNode('foo'),
             1 => self::$df::namedNode('foo'),
@@ -52,7 +52,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         foreach ($n as $i) {
             $this->assertTrue($i->equals($i));
             $this->assertFalse($i->equals($bn));
-            $this->assertInstanceOf(NamedNode::class, $i);
+            $this->assertInstanceOf(NamedNodeInterface::class, $i);
             $this->assertIsString((string) $i);
         }
         $this->assertEquals('foo', $n[0]->getValue());
@@ -69,11 +69,11 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertFalse($n[2]->equals($n[1]));
     }
 
-    public function testForeignNamedNode(): void {
+    public function testForeignNamedNodeInterface(): void {
         $this->assertTrue(self::$df::namedNode('foo')->equals(self::$fdf::namedNode('foo')));
     }
 
-    public function testBlankNode(): void {
+    public function testBlankNodeInterface(): void {
         $n  = [
             0 => self::$df::blankNode(),
             1 => self::$df::blankNode(),
@@ -84,7 +84,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         foreach ($n as $i) {
             $this->assertTrue($i->equals($i));
             $this->assertFalse($i->equals($nn));
-            $this->assertInstanceOf(BlankNode::class, $i);
+            $this->assertInstanceOf(BlankNodeInterface::class, $i);
             $this->assertIsString((string) $i);
             $this->assertStringStartsWith('_:', $i->getValue());
         }
@@ -103,11 +103,11 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($n[3]->equals($n[2]));
     }
 
-    public function testForeignBlankNode(): void {
+    public function testForeignBlankNodeInterface(): void {
         $this->assertTrue(self::$df::blankNode('_:n1')->equals(self::$fdf::blankNode('_:n1')));
     }
 
-    public function testLiteralFactory(): void {
+    public function testLiteralInterfaceFactory(): void {
         $l  = [
             0 => self::$df::literal('1'),
             1 => self::$df::literal('1', 'eng'),
@@ -119,9 +119,9 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         ];
         $nn = self::$df::NamedNode('1');
         foreach ($l as $i) {
-            $this->assertInstanceOf(Literal::class, $i);
+            $this->assertInstanceOf(LiteralInterface::class, $i);
             $this->assertSame('1', $i->getValue());
-            $this->assertSame('1', $i->getValue(Literal::CAST_LEXICAL_FORM));
+            $this->assertSame('1', $i->getValue(LiteralInterface::CAST_LEXICAL_FORM));
             $this->assertTrue($i->equals($i));
             $this->assertFalse($i->equals($nn));
             $this->assertIsString((string) $i);
@@ -151,8 +151,8 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         ];
         $nn = self::$df::NamedNode('1');
         foreach ($l as $i) {
-            $this->assertInstanceOf(Literal::class, $i);
-            $this->assertSame($i->getValue(), $i->getValue(Literal::CAST_LEXICAL_FORM));
+            $this->assertInstanceOf(LiteralInterface::class, $i);
+            $this->assertSame($i->getValue(), $i->getValue(LiteralInterface::CAST_LEXICAL_FORM));
             $this->assertTrue($i->equals($i));
             $this->assertFalse($i->equals($nn));
             $this->assertIsString((string) $i);
@@ -164,7 +164,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals('foo', $l[3]->getDatatype());
     }
 
-    public function testLiteralEqual(): void {
+    public function testLiteralInterfaceEqual(): void {
         $l1 = self::$df::literal(1);
         $l2 = self::$df::literal(1, null, RDF::XSD_INTEGER);
         $l3 = self::$df::literal('1');
@@ -201,7 +201,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertFalse($l2->equals($l6));
     }
 
-    public function testLiteralWith(): void {
+    public function testLiteralInterfaceWith(): void {
         $l0 = self::$df::literal('1');
 
         $l1 = $l0->withValue('2');
@@ -300,7 +300,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         }
     }
 
-    public function testLiteralStringable(): void {
+    public function testLiteralInterfaceStringable(): void {
         $l1 = self::$df::literal('foo', 'eng');
         $l2 = self::$df::literal($l1);
         $this->assertEquals((string) $l1, (string) $l2->getValue());
@@ -314,7 +314,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertEquals(RDF::XSD_STRING, $l4->getDatatype());
     }
 
-    public function testForeignLiteral(): void {
+    public function testForeignLiteralInterface(): void {
         $this->assertTrue(self::$df::literal('foo')->equals(self::$fdf::literal('foo')));
         $this->assertTrue(self::$df::literal('foo', '')->equals(self::$fdf::literal('foo', null, RDF::XSD_STRING)));
         $this->assertTrue(self::$df::literal('foo', 'eng')->equals(self::$fdf::literal('foo', 'eng')));
@@ -325,7 +325,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue(self::$df::defaultGraph()->equals(self::$fdf::defaultGraph()));
     }
 
-    public function testQuad(): void {
+    public function testQuadInterface(): void {
         $nn1 = self::$df::namedNode('foo');
         $nn2 = self::$df::namedNode('bar');
         $nn3 = self::$df::namedNode('baz');
@@ -347,7 +347,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         ];
         foreach ($q as $n => $i) {
             $this->assertTrue($i->equals($i));
-            $this->assertInstanceOf(Quad::class, $i);
+            $this->assertInstanceOf(QuadInterface::class, $i);
             $this->assertFalse($i->equals($nn1));
             if ($n < 6) {
                 $this->assertTrue($nn3->equals($i->getSubject()));
@@ -357,17 +357,17 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         for ($i = 0; $i <= 6; $i++) {
             for ($j = $i + 1; $j <= 7; $j++) {
                 if ($i === 0 && $j === 4 || $i === 1 && $j === 3) {
-                    $this->assertTrue($q[$i]->equals($q[$j]), "equals() between Quads $i and $j failed");
-                    $this->assertTrue($q[$j]->equals($q[$i]), "equals() between Quads $j and $i failed");
+                    $this->assertTrue($q[$i]->equals($q[$j]), "equals() between QuadInterfaces $i and $j failed");
+                    $this->assertTrue($q[$j]->equals($q[$i]), "equals() between QuadInterfaces $j and $i failed");
                 } else {
-                    $this->assertFalse($q[$i]->equals($q[$j]), "equals() between Quads $i and $j failed");
-                    $this->assertFalse($q[$j]->equals($q[$i]), "equals() between Quads $j and $i failed");
+                    $this->assertFalse($q[$i]->equals($q[$j]), "equals() between QuadInterfaces $i and $j failed");
+                    $this->assertFalse($q[$j]->equals($q[$i]), "equals() between QuadInterfaces $j and $i failed");
                 }
             }
         }
     }
 
-    public function testQuadExceptions(): void {
+    public function testQuadInterfaceExceptions(): void {
         $nn = self::$df::namedNode('baz');
         $l  = self::$df::literal('foo');
         try {
@@ -386,7 +386,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         }
     }
 
-    public function testQuadWith(): void {
+    public function testQuadInterfaceWith(): void {
         $nn1 = self::$df::namedNode('foo');
         $nn2 = self::$df::namedNode('bar');
         $l1  = self::$df::literal('foo');
@@ -413,7 +413,7 @@ abstract class TermsInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertTrue($nn1->equals($q3->getObject()));
     }
 
-    public function testForeignQuad(): void {
+    public function testForeignQuadInterface(): void {
         $bn  = self::$df::blankNode('_:n1');
         $nn  = self::$df::namedNode('foo');
         $l   = self::$df::literal('1', null, RDF::XSD_INT);

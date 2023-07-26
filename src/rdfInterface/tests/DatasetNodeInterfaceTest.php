@@ -26,12 +26,11 @@
 
 namespace rdfInterface\tests;
 
-use rdfHelpers\GenericQuadIterator;
-use rdfInterface\DatasetInterface as Dataset;
-use rdfInterface\QuadCompareInterface as QuadCompare;
-use rdfInterface\TermInterface as Term;
-use rdfInterface\TermCompareInterface as TermCompare;
-use rdfInterface\DatasetNodeInterface as DatasetNode;
+use rdfInterface\DatasetInterface;
+use rdfInterface\QuadCompareInterface;
+use rdfInterface\TermInterface;
+use rdfInterface\TermCompareInterface;
+use rdfInterface\DatasetNodeInterface;
 
 /**
  * Description of NodeInterfaceTest
@@ -42,12 +41,13 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
-    abstract public static function getDataset(): Dataset;
+    abstract public static function getDataset(): DatasetInterface;
 
-    abstract public static function getDatasetNode(Dataset $dataset, Term $node): DatasetNode;
+    abstract public static function getDatasetNode(DatasetInterface $dataset,
+                                                   TermInterface $node): DatasetNodeInterface;
 
-    abstract public static function getQuadTemplate(TermCompare | Term | null $subject = null,
-                                                    TermCompare | Term | null $predicate = null,
-                                                    TermCompare | Term | null $object = null,
-                                                    TermCompare | Term | null $graph = null): QuadCompare;
+    abstract public static function getQuadTemplate(TermCompareInterface | TermInterface | null $subject = null,
+                                                    TermCompareInterface | TermInterface | null $predicate = null,
+                                                    TermCompareInterface | TermInterface | null $object = null,
+                                                    TermCompareInterface | TermInterface | null $graph = null): QuadCompareInterface;
 }

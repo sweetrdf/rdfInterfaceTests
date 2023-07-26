@@ -28,7 +28,7 @@ namespace rdfInterface\tests;
 
 use OutOfBoundsException;
 use BadMethodCallException;
-use rdfInterface\RdfNamespaceInterface as RdfNamespace;
+use rdfInterface\RdfNamespaceInterface;
 
 /**
  * Description of RdfNamespaceTest
@@ -39,7 +39,7 @@ abstract class RdfNamespaceInterfaceTest extends \PHPUnit\Framework\TestCase {
 
     use TestBaseTrait;
 
-    abstract public static function getRdfNamespace(): RdfNamespace;
+    abstract public static function getRdfNamespace(): RdfNamespaceInterface;
 
     public function testGetAddRemove(): void {
         $nmsp = static::getRdfNamespace();
