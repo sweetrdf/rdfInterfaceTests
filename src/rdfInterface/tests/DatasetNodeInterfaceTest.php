@@ -26,7 +26,7 @@
 
 namespace rdfInterface\tests;
 
-use OutOfBoundsException;
+use UnexpectedValueException;
 use rdfHelpers\GenericQuadIterator;
 use rdfInterface\DatasetInterface;
 use rdfInterface\DatasetNodeInterface;
@@ -35,6 +35,7 @@ use rdfInterface\QuadCompareInterface;
 use rdfInterface\TermInterface;
 use rdfInterface\TermCompareInterface;
 use rdfInterface\QuadInterface;
+use rdfInterface\MultipleQuadsMatchedException;
 
 /**
  * Description of NodeInterfaceTest
