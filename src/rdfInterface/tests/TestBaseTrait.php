@@ -27,6 +27,7 @@
 namespace rdfInterface\tests;
 
 use rdfInterface\DataFactoryInterface;
+use rdfInterface\DatasetInterface;
 
 /**
  * Description of TestBaseTrait
