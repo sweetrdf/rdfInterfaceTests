@@ -58,4 +58,21 @@ trait TestBaseTrait {
             self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('bar'), self::$df::literal('baz', 'en'), self::$df::namedNode('graph')),
         ];
     }
+
+    /**
+     * 
+     * @param DatasetInterface $d
+     * @return array<int>
+     */
+    private function getQuadsCount(DatasetInterface $d): array {
+        $n      = 0;
+        $counts = [0, 0, 0, 0];
+        foreach ($d as $q) {
+            $n++;
+            foreach (self::$quads as $i => $j) {
+                $counts[$i] += (int) $j->equals($q);
+            }
+        }
+        return array_merge([$n], $counts);
+    }
 }

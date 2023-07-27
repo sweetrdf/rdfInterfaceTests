@@ -145,230 +145,360 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
         $this->assertCount(4, $d->getDataset());
     }
 
-    public function testIterator(): void {
-        $d = static::getDatasetNode(self::$quads[0]->getSubject());
-        $d->add(new GenericQuadIterator(self::$quads));
-        foreach ($d as $v) {
-            $this->assertNotNull($v);
-            $this->assertTrue($v->equals(self::$quads[0]) || $v->equals(self::$quads[3]));
+    public function testGetIterator(): void {
+        $de = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d  = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d->add(self::$quads);
+
+        // all
+        $n      = 0;
+        $counts = [0, 0, 0, 0];
+        foreach ($d as $q) {
+            $n++;
+            foreach (self::$quads as $i => $j) {
+                $counts[$i] += (int) $j->equals($q);
+            }
+        }
+        $this->assertEquals(2, $n);
+        $this->assertEquals([1, 0, 0, 1], $counts);
+
+        // match - QuadCompareInterface
+        $qt     = static::getQuadTemplate(self::$quads[0]->getSubject());
+        $n      = 0;
+        $counts = [0, 0, 0, 0];
+        foreach ($d->getIterator($qt) as $q) {
+            $n++;
+            foreach (self::$quads as $i => $j) {
+                $counts[$i] += (int) $j->equals($q);
+            }
+        }
+        $this->assertEquals(2, $n);
+        $this->assertEquals([1, 0, 0, 1], $counts);
+
+        // match - callable
+        $fn     = fn($x) => !self::$quads[1]->getPredicate()->equals($x->getPredicate());
+        $n      = 0;
+        $counts = [0, 0, 0, 0];
+        foreach ($d->getIterator($fn) as $q) {
+            $n++;
+            foreach (self::$quads as $i => $j) {
+                $counts[$i] += (int) $j->equals($q);
+            }
+        }
+        $this->assertEquals(2, $n);
+        $this->assertEquals([1, 0, 0, 1], $counts);
+
+        // match - QuadIteratorInterface|QuadIteratorAggregateInterface
+        $dd     = static::getDatasetNode(self::$quads[0]->getSubject());
+        $dd->add([self::$quads[1], self::$quads[3]]);
+        $n      = 0;
+        $counts = [0, 0, 0, 0];
+        foreach ($dd as $q) {
+            $n++;
+            foreach (self::$quads as $i => $j) {
+                $counts[$i] += (int) $j->equals($q);
+            }
+        }
+        $this->assertEquals(1, $n);
+        $this->assertEquals([0, 0, 0, 1], $counts);
+
+        // no match - QuadCompareInterface
+        $qt = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        foreach ($d->getIterator($qt) as $q) {
+            $this->assertTrue(false);
+        }
+
+        // no match - callable
+        $fn = fn() => false;
+        foreach ($d->getIterator($fn) as $q) {
+            $this->assertTrue(false);
+        }
+
+        // no match - QuadIteratorInterface|QuadIteratorAggregateInterface
+        $dd = static::getDatasetNode(self::$quads[0]->getSubject());
+        $nn = self::$df->namedNode('noMatch');
+        $dd->add(self::$df->quad($nn, $nn, $nn));
+        foreach ($d->getIterator($dd) as $q) {
+            $this->assertTrue(false);
+        }
+
+        // no match - empty QuadIteratorInterface|QuadIteratorAggregateInterface
+        $dd = static::getDatasetNode(self::$quads[0]->getSubject());
+        foreach ($d->getIterator($dd) as $q) {
+            $this->assertTrue(false);
+        }
+
+        // empty
+        foreach ($de as $q) {
+            $this->assertTrue(false);
+        }
+        $qt = static::getQuadTemplate(self::$quads[0]->getSubject());
+        foreach ($de->getIterator($qt) as $q) {
+            $this->assertTrue(false);
+        }
+        foreach ($de->getIterator(fn() => true) as $q) {
+            $this->assertTrue(false);
+        }
+        foreach ($de->getIterator($d) as $q) {
+            $this->assertTrue(false);
         }
     }
 
-    public function testOffsetExistsGet(): void {
-        $node   = self::$quads[0]->getSubject();
-        $d      = static::getDatasetNode($node);
-        $d->add(new GenericQuadIterator(self::$quads));
-        $triple = self::$df::quad(self::$df::namedNode('foo'), self::$df::namedNode('bar'), self::$df::literal('baz', 'de'));
+    public function testOffsetExists(): void {
+        $de = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d  = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d->add(self::$quads);
 
-        // by Quad
-        foreach (self::$quads as $i) {
-            if ($node->equals($i->getSubject())) {
-                $this->assertTrue(isset($d[$i]));
-                $this->assertTrue($i->equals($d[$i]));
-            } else {
-                $this->assertFalse(isset($d[$i]));
+        // single match - QuadCompareInterface
+        $this->assertTrue(isset($d[self::$quads[0]]));
+        // single match - callable
+        $this->assertTrue(isset($d[fn($x) => self::$quads[3]->equals($x)]));
+        // single match - 0
+        $this->assertTrue(isset($d[0]));
+
+        // no match - QuadCompareInterface
+        $qt = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        $this->assertFalse(isset($d[$qt]));
+        // no match - callable
+        $this->assertFalse(isset($d[fn() => false]));
+        // no match - trash
+        foreach ([100, -10, 'aaa', new \stdClass()] as $i) {
+            try {
+                isset($d[$i]);
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertTrue(true);
             }
         }
-        $this->assertFalse(isset($d[$triple]));
-        try {
-            $x = $d[$triple];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
+
+        // no match - empty dataset - QuadCompareInterface
+        $qt = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        $this->assertFalse(isset($de[$qt]));
+        // no match - empty dataset - callable
+        $this->assertFalse(isset($de[fn() => false]));
+        // no match - empty dataset - 0
+        $this->assertFalse(isset($de[0]));
+        // no match - empty dataset - trash
+        foreach ([100, -10, 'aaa', new \stdClass()] as $i) {
+            try {
+                isset($de[$i]);
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertTrue(true);
+            }
         }
 
-        // by QuadTemplate
-        $tmpl = static::getQuadTemplate(subject: $node, graph: self::$quads[3]->getGraph());
-        $this->assertTrue(self::$quads[3]->equals($d[$tmpl]));
-        try {
-            $tmpl = static::getQuadTemplate(null, self::$df::namedNode('bar'));
-            $x    = $d[$tmpl];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
+        // multiple matches - QuadCompareInterface, callabel
+        $qt     = static::getQuadTemplate(self::$quads[0]->getSubject());
+        $toFail = [$qt, fn() => true];
+        foreach ($toFail as $i) {
+            try {
+                isset($d[$i]);
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (MultipleQuadsMatchedException $ex) {
+                $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+                $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+            }
+        }
+    }
+
+    public function testOffsetUnset(): void {
+        $de = static::getDatasetNode(self::$quads[0]->getSubject());
+        $this->assertCount(0, $de);
+        $d  = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d->add(self::$quads);
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+        $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+
+        // single match - QuadCompareInterface
+        unset($d[self::$quads[0]]);
+        $this->assertEquals([1, 0, 0, 0, 1], $this->getQuadsCount($d));
+        $this->assertEquals([3, 0, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+        // single match - callable
+        unset($d[fn($x) => self::$quads[3]->equals($x)]);
+        $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([2, 0, 1, 1, 0], $this->getQuadsCount($d->getDataset()));
+
+        // no match - QuadCompareInterface
+        $qt = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        unset($d[$qt]);
+        $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([2, 0, 1, 1, 0], $this->getQuadsCount($d->getDataset()));
+        // no match - callable
+        unset($d[fn() => false]);
+        $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([2, 0, 1, 1, 0], $this->getQuadsCount($d->getDataset()));
+        // no match - trash
+        foreach ([0, 100, -10, 'aaa', new \stdClass()] as $i) {
+            try {
+                unset($d[$i]);
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertTrue(true);
+            }
+        }
+        $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([2, 0, 1, 1, 0], $this->getQuadsCount($d->getDataset()));
+
+        // no match - empty dataset - QuadCompareInterface
+        $qt = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        unset($de[$qt]);
+        $this->assertCount(0, $de);
+        // no match - empty dataset - callable
+        unset($de[fn() => false]);
+        $this->assertCount(0, $de);
+        // no match - empty dataset - trash
+        foreach ([0, 100, -10, 'aaa', new \stdClass()] as $i) {
+            try {
+                unset($de[$i]);
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($de));
+            }
         }
 
-        // by callback
-        $fn = function (QuadInterface $q, DatasetInterface $d) {
-            $obj = $q->getObject();
-            return $obj instanceof LiteralInterface && $obj->getLang() === 'en';
-        };
-        $this->assertTrue(self::$quads[3]->equals($d[$fn]));
-        try {
-            $fn = function (QuadInterface $q, DatasetInterface $d) {
-                return $q->getPredicate()->getValue() === 'bar';
-            };
-            $x = $d[$fn];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
+        // multiple matches - QuadCompareInterface, callable
+        $d->add(self::$quads);
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+        $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+        $qt     = static::getQuadTemplate(self::$quads[0]->getSubject());
+        $toFail = [$qt, fn() => true];
+        foreach ($toFail as $i) {
+            try {
+                unset($d[$i]);
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (MultipleQuadsMatchedException $ex) {
+                $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+                $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+            }
+        }
+    }
+
+    public function testOffsetGet(): void {
+        $de = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d  = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d->add(self::$quads);
+
+        // single match - QuadCompareInterface
+        $this->assertTrue(self::$quads[0]->equals($d[self::$quads[0]]));
+        // single match - callable
+        $this->assertTrue(self::$quads[3]->equals($d[fn($x) => self::$quads[3]->equals($x)]));
+        // single match - 0
+        $q = $d[0];
+        $this->assertTrue(self::$quads[0]->equals($q) || self::$quads[3]->equals($q));
+
+        // no match - QuadCompareInterface, callable, trash
+        $qt     = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        $toFail = [$qt, fn() => false, 100, -10, 'aaa', new \stdClass()];
+        foreach ($toFail as $i) {
+            try {
+                $d[$i];
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+                $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+            }
         }
 
-        // by integer
-        $this->assertTrue(isset($d[0]));
-        $quad = $d[0];
-        $this->assertEquals(1, array_sum(array_map(fn($x) => $x->equals($quad), self::$quads)));
-        $this->assertFalse(isset($d[1])); // isset() internally suppresses exceptions
-        try {
-            $quad = $d[1];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
+        // no match - empty dataset - QuadCompareInterface, callable, 0, trash
+        $qt     = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        $toFail = [$qt, fn() => false, 0, 100, -10, 'aaa', new \stdClass()];
+        foreach ($toFail as $i) {
+            try {
+                $de[$i];
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($de));
+            }
         }
-        $d = static::getDatasetNode($node);
-        $this->assertFalse(isset($d[0]));
-        try {
-            $quad = $d[0];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
+
+        // multiple matches - QuadCompareInterface, callable
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+        $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+        $qt     = static::getQuadTemplate(self::$quads[0]->getSubject());
+        $toFail = [$qt, fn() => true];
+        foreach ($toFail as $i) {
+            try {
+                $d[$i];
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (MultipleQuadsMatchedException $ex) {
+                $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+                $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+            }
         }
-        $this->assertEquals("fallback", $d[0] ?? "fallback");
     }
 
     public function testOffsetSet(): void {
-        $node = self::$quads[0]->getSubject();
-        $d    = static::getDatasetNode($node);
-        $d[]  = self::$quads[0];
-        $this->assertCount(1, $d);
-        $this->assertContains(self::$quads[0], $d);
+        $de = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d  = static::getDatasetNode(self::$quads[0]->getSubject());
 
-        $d[] = self::$quads[1];
+        // null
+        $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($d));
+        $d[] = self::$quads[0];
+        $this->assertEquals([1, 1, 0, 0, 0], $this->getQuadsCount($d));
         $d[] = self::$quads[3];
-        $this->assertCount(2, $d);
-        $this->assertNotContains(self::$quads[1], $d);
-        $this->assertNotContains(self::$quads[2], $d);
-        $this->assertContains(self::$quads[3], $d);
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+        $d[] = self::$quads[3];
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
 
-        // by Quad
-        // 0 foo bar "baz"
-        // 1 baz foo bar
-        // 3 foo bar "baz"@en graph
-        $d[self::$quads[0]] = self::$quads[3];
-        $this->assertCount(1, $d);
-        $this->assertContains(self::$quads[3], $d);
-        $this->assertNotContains(self::$quads[0], $d);
-        $this->assertNotContains(self::$quads[1], $d);
-        $this->assertNotContains(self::$quads[2], $d);
-        try {
-            $d[self::$quads[1]] = self::$quads[2];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException $ex) {
-            $this->assertTrue(true);
-        }
+        // single match - QuadCompareInterface
+        $nq                                       = self::$quads[3]->withPredicate(self::$df->namedNode('other'));
+        $d[self::$quads[3]]                       = $nq;
+        $this->assertEquals([2, 1, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([2, 1, 0, 0, 0], $this->getQuadsCount($d->getDataset()));
+        $d[$nq]                                   = self::$quads[0];
+        $this->assertEquals([1, 1, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([1, 1, 0, 0, 0], $this->getQuadsCount($d->getDataset()));
+        // single match - callable
+        $d[]                                      = self::$quads[3];
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d->getDataset()));
+        $d[fn($x) => self::$quads[3]->equals($x)] = $nq;
+        $this->assertEquals([2, 1, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([2, 1, 0, 0, 0], $this->getQuadsCount($d->getDataset()));
+        $d[fn($x) => $nq->equals($x)]             = self::$quads[0];
+        $this->assertEquals([1, 1, 0, 0, 0], $this->getQuadsCount($d));
+        $this->assertEquals([1, 1, 0, 0, 0], $this->getQuadsCount($d->getDataset()));
 
-        // by QuadTemplate
-        // 0 foo bar "baz"
-        // 1 baz foo bar
-        // 2 bar baz foo
-        // 3 foo bar "baz"@en graph
-        $d        = static::getDatasetNode($node);
-        $d->add(new GenericQuadIterator(self::$quads));
-        $tmpl     = static::getQuadTemplate($node, self::$df::namedNode('bar'), self::$df::literal('baz', 'en'));
-        $d[$tmpl] = self::$quads[0];
-        $this->assertCount(1, $d);
-        $this->assertContains(self::$quads[0], $d);
-        $this->assertNotContains(self::$quads[1], $d);
-        $this->assertNotContains(self::$quads[2], $d);
-        $this->assertNotContains(self::$quads[3], $d);
-        $d[]      = self::$quads[3];
-        try {
-            // two quads match
-            $d[static::getQuadTemplate($node)] = self::$quads[0];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
-        }
-        try {
-            // no quad matches
-            $d[static::getQuadTemplate($node, self::$df::namedNode('foo'))] = self::$quads[0];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
-        }
-        try {
-            // no quad matches
-            $d[static::getQuadTemplate(self::$df::namedNode('aaa'))] = self::$quads[0];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
+        // no match - QuadCompareInterface, callable, trash
+        $qt = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        foreach ([$qt, fn() => false, 100, -10, 'aaa', new \stdClass()] as $i) {
+            try {
+                $d[$i] = self::$quads[0];
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertEquals([1, 1, 0, 0, 0], $this->getQuadsCount($d));
+            }
         }
 
-        // by callback
-        // 0 foo bar "baz"
-        // 1 baz foo bar
-        // 2 bar baz foo
-        // 3 foo bar "baz"@en graph
-        $d  = static::getDatasetNode($node);
-        $d->add(new GenericQuadIterator(self::$quads));
-        $fn = function (QuadInterface $q, DatasetInterface $d) {
-            return $q->getGraph()->getValue() === 'graph';
-        };
-        $d[$fn] = self::$quads[2];
-        $this->assertCount(1, $d);
-        $this->assertContains(self::$quads[0], $d);
-        $this->assertNotContains(self::$quads[1], $d);
-        $this->assertNotContains(self::$quads[2], $d);
-        $this->assertNotContains(self::$quads[3], $d);
-        $d[]    = self::$quads[3];
-        try {
-            // many matches
-            $fn = function (QuadInterface $q, DatasetInterface $d) {
-                return $q->getSubject()->getValue() === 'foo';
-            };
-            $d[$fn] = self::$quads[1];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
+        // no match - empty dataset - QuadCompareInterface, callable, trash
+        $qt     = static::getQuadTemplate(self::$df->namedNode('noMatch'));
+        $toFail = [$qt, fn() => false, 0, 100, -10, 'aaa', new \stdClass()];
+        foreach ($toFail as $i) {
+            try {
+                $de[$i] = self::$quads[0];
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (UnexpectedValueException $ex) {
+                $this->assertEquals([0, 0, 0, 0, 0], $this->getQuadsCount($de));
+            }
         }
-        try {
-            // no match
-            $fn = function (QuadInterface $q, DatasetInterface $d) {
-                return $q->getSubject()->getValue() === 'aaa';
-            };
-            $d[$fn] = self::$quads[1];
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException) {
-            $this->assertTrue(true);
-        }
-    }
 
-    public function testOffsetUnSet(): void {
-        $node = self::$quads[0]->getSubject();
-        $d    = static::getDatasetNode($node);
-        $d->add(new GenericQuadIterator(self::$quads));
-        $this->assertCount(2, $d);
-        // many matches
-        try {
-            unset($d[static::getQuadTemplate($node)]);
-            $this->assertTrue(false);
-        } catch (OutOfBoundsException $ex) {
-            $this->assertTrue(true);
+        // multiple matches - QuadCompareInterface, callable
+        $d      = static::getDatasetNode(self::$quads[0]->getSubject());
+        $d->add(self::$quads);
+        $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+        $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+        $qt     = static::getQuadTemplate(self::$quads[0]->getSubject());
+        $toFail = [$qt, fn() => true];
+        foreach ($toFail as $i) {
+            try {
+                $d[$i] = self::$quads[0];
+                $this->assertTrue(false, "No exception for " . (is_object($i) ? get_class($i) : $i));
+            } catch (MultipleQuadsMatchedException $ex) {
+                $this->assertEquals([2, 1, 0, 0, 1], $this->getQuadsCount($d));
+                $this->assertEquals([4, 1, 1, 1, 1], $this->getQuadsCount($d->getDataset()));
+            }
         }
-        // by Quad
-        unset($d[self::$quads[0]]);
-        $this->assertCount(1, $d);
-        $this->assertNotContains(self::$quads[0], $d);
-        $this->assertContains(self::$quads[3], $d);
-        // by QuadTemplate
-        unset($d[static::getQuadTemplate($node)]);
-        $this->assertCount(0, $d);
-        $this->assertNotContains(self::$quads[0], $d);
-        $this->assertNotContains(self::$quads[3], $d);
-        // by callable
-        $d->add(new GenericQuadIterator(self::$quads));
-        $fn = function (QuadInterface $x) {
-            return $x->getGraph()->getValue() === 'graph';
-        };
-        unset($d[$fn]);
-        $this->assertCount(1, $d);
-        $this->assertContains(self::$quads[0], $d);
-        $this->assertNotContains(self::$quads[3], $d);
-        // unset non-existent
-        unset($d[self::$quads[3]]);
-        $this->assertCount(1, $d);
-        $this->assertContains(self::$quads[0], $d);
-        $this->assertNotContains(self::$quads[3], $d);
     }
 
     public function testToString(): void {
@@ -730,19 +860,6 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
         }, static::getQuadTemplate(self::$df::namedNode('foobar')));
         $this->assertTrue($d2->equals($d));
         $this->assertTrue($d2->getDataset()->equals($d->getDataset()));
-    }
-
-    public function testGetIterator(): void {
-        $d   = static::getDatasetNode(self::$quads[0]->getSubject());
-        $d[] = self::$quads[0];
-        $d[] = self::$quads[1];
-        $d[] = self::$quads[3];
-        $n   = 0;
-        foreach ($d->getIterator(self::$quads[0]) as $i) {
-            $this->assertTrue(self::$quads[0]->equals($i));
-            $n++;
-        }
-        $this->assertEquals(1, $n);
     }
 
     public function testAnyNone(): void {

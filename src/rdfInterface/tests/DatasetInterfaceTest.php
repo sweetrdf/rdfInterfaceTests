@@ -986,21 +986,4 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
         $sum = static::getDataset()->reduce(fn(QuadInterface $x) => 1, -10);
         $this->assertEquals(-10, $sum);
     }
-
-    /**
-     * 
-     * @param DatasetInterface $d
-     * @return array<int>
-     */
-    private function getQuadsCount(DatasetInterface $d): array {
-        $n      = 0;
-        $counts = [0, 0, 0, 0];
-        foreach ($d as $q) {
-            $n++;
-            foreach (self::$quads as $i => $j) {
-                $counts[$i] += (int) $j->equals($q);
-            }
-        }
-        return array_merge([$n], $counts);
-    }
 }
