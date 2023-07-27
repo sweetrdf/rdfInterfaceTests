@@ -75,7 +75,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testGetIterator(): void {
-        $de = self::getDataset();
+        $de = static::getDataset();
         $d  = static::getDataset();
         $d->add(self::$quads);
 
@@ -174,7 +174,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testOffsetExists(): void {
-        $de = self::getDataset();
+        $de = static::getDataset();
         $d  = static::getDataset();
         $d->add(self::$quads);
 
@@ -231,7 +231,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testOffsetUnset(): void {
-        $de = self::getDataset();
+        $de = static::getDataset();
         $this->assertCount(0, $de);
         $d  = static::getDataset();
         $d->add(self::$quads);
@@ -295,7 +295,7 @@ abstract class DatasetInterfaceTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testOffsetGet(): void {
-        $de = self::getDataset();
+        $de = static::getDataset();
         $d  = static::getDataset();
         $d->add(self::$quads);
 
