@@ -61,6 +61,38 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
                                                     TermCompareInterface | TermInterface | null $object = null,
                                                     TermCompareInterface | TermInterface | null $graph = null): QuadCompareInterface;
 
+    public function testGetNode(): void {
+        $n = self::$quads[0]->getSubject();
+        $d = static::getDatasetNode($n);
+        $this->assertTrue($n->equals($d->getNode()));
+    }
+
+    /**
+     * withNode() changes the node but preserves the dataset
+     */
+    public function testWithNode(): void {
+        $n1 = self::$quads[0]->getSubject();
+        $n2 = self::$quads[1]->getSubject();
+        $this->assertFalse($n1->equals($n2));
+        $d1 = static::getDatasetNode($n1);
+
+        // named node node
+        $d2 = $d1->withNode($n2);
+        $this->assertTrue($n2->equals($d2->getNode()));
+        $this->assertCount(0, $d2);
+        $this->assertEquals(spl_object_id($d1->getDataset()), spl_object_id($d2->getDataset()));
+
+        // quad node
+        $n3 = self::$quads[2];
+        $d3 = $d2->withNode($n3);
+        $this->assertTrue($n3->equals($d3->getNode()));
+        $this->assertCount(0, $d3);
+        $this->assertEquals(spl_object_id($d2->getDataset()), spl_object_id($d3->getDataset()));
+    }
+
+    /**
+     * DatasetNodeInterface::getValue() is a equivalent of getNode()->getValue()
+     */
     public function testGetValue(): void {
         $n = self::$quads[0]->getSubject();
         $d = static::getDatasetNode($n);
@@ -73,17 +105,6 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
         } catch (\BadMethodCallException $ex) {
             $this->assertTrue(true);
         }
-    }
-
-    public function testWithGetNode(): void {
-        $dn1 = static::getDatasetNode(self::$quads[0]);
-        $dn1->add(new GenericQuadIterator(self::$quads));
-        $dn2 = $dn1->withNode(self::$quads[1]);
-
-        $this->assertFalse($dn1->equals($dn2));
-        $this->assertTrue($dn1->getDataset()->equals($dn2->getDataset()));
-        $this->assertTrue(self::$quads[0]->equals($dn1->getNode()));
-        $this->assertTrue(self::$quads[1]->equals($dn2->getNode()));
     }
 
     public function testGetDataset(): void {
@@ -109,19 +130,24 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
 
         $dn1 = static::getDatasetNode(self::$quads[0]->getSubject(), $d1);
 
-        // DatasetNodeInterface::factory() isolates from the initial dataset
+        // DatasetNodeInterface::factory() creates a copy of the dataset
         $d1->add(self::$quads[2]);
         $this->assertContains(self::$quads[2], $d1);
+        $this->assertNotContains(self::$quads[2], $dn1);
         $this->assertNotContains(self::$quads[2], $dn1->getDataset());
         $this->assertNotContains(self::$quads[2], $d2);
 
-        // withDataset() uses provided dataset directly
+        // withDataset() keeps the provided dataset
         $dn2 = $dn1->withDataset($d2);
         $this->assertFalse($dn1->equals($dn2));
         $this->assertContains(self::$quads[0], $d1);
         $this->assertContains(self::$quads[0], $dn1);
         $this->assertContains(self::$quads[0], $dn1->getDataset());
+        $this->assertNotContains(self::$quads[0], $d2);
+        $this->assertNotContains(self::$quads[0], $dn2);
+        $this->assertNotContains(self::$quads[0], $dn2->getDataset());
         $this->assertContains(self::$quads[1], $d2);
+        $this->assertNotContains(self::$quads[1], $dn2);
         $this->assertContains(self::$quads[1], $dn2->getDataset());
 
         $d2->add(self::$quads[3]);
@@ -144,6 +170,15 @@ abstract class DatasetNodeInterfaceTest extends \PHPUnit\Framework\TestCase {
         $d->add(new GenericQuadIterator(self::$quads));
         $this->assertEquals(2, count($d));
         $this->assertCount(4, $d->getDataset());
+    }
+
+    public function testAddQuadsNoSubject(): void {
+        $d   = static::getDatasetNode(self::$quads[1]->getSubject());
+        $qns = self::$df->quadNoSubject(self::$df->namedNode('foo'), self::$df->literal('bar'));
+        $d->add($qns);
+        $this->assertCount(1, $d);
+        $q   = self::$df->quad($d->getNode(), $qns->getPredicate(), $qns->getObject(), $qns->getGraph());
+        $this->assertContains($q, $d);
     }
 
     public function testGetIterator(): void {
